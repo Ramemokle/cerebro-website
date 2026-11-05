@@ -67,7 +67,7 @@
     var plan=document.querySelector('.plan');
     function css(n){return getComputedStyle(root).getPropertyValue(n).trim();}
     function rgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(function(c){return c+c}).join('');var n=parseInt(h,16);return (n>>16&255)+','+(n>>8&255)+','+(n&255);}
-    var stg=[css('--aw')||'#D4C9FF',css('--co')||'#A9D6FF',css('--rm')||'#A8E6CF',css('--cv')||'#FFC8A8'].map(rgb);
+    var stg=[css('--aw')||'#AD99FB',css('--co')||'#8566F9',css('--rm')||'#5C33F7',css('--cv')||'#3300F5'].map(rgb);
     function box(){return page?{left:0,top:0,width:innerWidth,height:innerHeight}:band.getBoundingClientRect();}
     function spawn(x){return {x:x,s:Math.random()*2-1,v:1+Math.random()*1.6,w:Math.random()*6.283};}
     // where the stream ends: the media plan card while it is on screen and to the right, otherwise the right edge
