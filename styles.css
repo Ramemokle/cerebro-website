@@ -335,7 +335,7 @@ a.svc-link{text-decoration:none;display:contents}
 .cur-mark,.cur-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:1000}
 .cur-mark{width:26px;height:26px;margin:-13px 0 0 -13px;transition:opacity .2s}
 .cur-mark img{width:100%;height:100%;display:block;filter:brightness(1.35) drop-shadow(0 0 6px var(--signal));transition:transform .35s cubic-bezier(.3,1.6,.4,1)}
-.cur-ring{display:grid;place-items:center;border:1.5px solid color-mix(in srgb,var(--signal) 65%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--signal) 35%,transparent);transition:background .25s,border-color .25s,opacity .25s}
+.cur-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:1.5px solid color-mix(in srgb,var(--signal) 65%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--signal) 35%,transparent);transition:background .25s,border-color .25s,opacity .25s}
 .cur-ring b{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#fff;opacity:0;transition:opacity .2s;white-space:nowrap}
 html.has-cur,html.has-cur *{cursor:none!important}
 html.has-cur input:not([type=range]):not([type=checkbox]):not([type=radio]),html.has-cur textarea{cursor:text!important}
@@ -346,6 +346,10 @@ html.cur-stick .cur-mark,html.cur-label .cur-mark,html.cur-native .cur-mark{opac
 html.cur-stick .cur-ring{background:color-mix(in srgb,var(--signal) 14%,transparent);border-color:var(--signal)}
 html.cur-label .cur-ring{background:var(--signal);border-color:var(--signal)}
 html.cur-label .cur-ring b{opacity:1}
+.cur-ring img{width:26px;height:26px;display:block;filter:brightness(0) invert(1) drop-shadow(0 0 6px rgba(255,255,255,.5));opacity:0;transform:scale(.4) rotate(-20deg);transition:opacity .2s,transform .4s cubic-bezier(.3,1.6,.4,1)}
+.cur-ring b:empty{display:none}
+html:not(.cur-label) .cur-ring img,html:not(.cur-label) .cur-ring b{position:absolute}
+html.cur-label .cur-ring img{opacity:1;transform:none}
 html.cur-native .cur-ring,html.cur-off .cur-ring,html.cur-off .cur-mark{opacity:0}
 
 /* 02 living headline */
