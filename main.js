@@ -248,74 +248,56 @@
     document.addEventListener('cerebro:lang',txt);
   });
 
-  /* 05 media plan calculator: benchmarks from a real Meta + Google campaign
+  /* 05 media plan calculator: benchmarks from a real Meta campaign
      Meta reach per $1 by format (2,100–2,400 per $10), frequency per format, unique reach = sum x 0.8;
-     Google Shopping: 35 impressions per $1, CPC $2.10; the ad budget is entered in USD */
+     each goal uses only its own formats; the ad budget is entered in USD */
   document.querySelectorAll('.plan.mp').forEach(function(plan){
-    var OVERLAP=.8,CPV=.003,CPE=.015; // cost per video view and per post engagement, USD
-    var F=[
-      {ka:'Reels',en:'Reels',oka:'ცნობადობა',oen:'Awareness',rp:227.5,fq:2.0,c:'var(--aw)'},
-      {ka:'ვიდეო',en:'Video',oka:'ცნობადობა · ჩართულობა',oen:'Awareness · engagement',rp:215,fq:2.4,c:'var(--co)'},
-      {ka:'კარუსელი',en:'Carousel',oka:'ტრაფიკი',oen:'Traffic',rp:230,fq:2.1,c:'var(--rm)'},
-      {ka:'Collection',en:'Collection',oka:'გაყიდვები',oen:'Sales',rp:210,fq:2.6,c:'var(--cv)'},
-      {ka:'Google Shopping',en:'Google Shopping',oka:'გაყიდვები · კლიკები',oen:'Sales · clicks',imp:35,cpc:2.1,c:'var(--sig-dk)'}];
-    // budget split per goal (Reels, Video, Carousel, Collection, Google Shopping), following the objectives in the plan
-    var PRESETS={reach:[35,20,35,5,5],freq:[10,40,10,35,5],video:[40,50,5,5,0],eng:[35,25,30,5,5],sales:[5,10,10,40,35]};
-    var GOALS=[['reach','Reach'],['freq','Frequency'],['video','Video views'],['eng','Post engagement'],['sales','Sales / Conversions']];
+    var OVERLAP=.8,CPV=.003,CPE=.015,CPP=[1,14]; // cost per video view, per post engagement and per purchase (min–max), USD
+    var F={
+      reels:{n:'Reels',rp:227.5,fq:2.0,c:'var(--aw)'},
+      video:{n:'Video',rp:215,fq:2.4,c:'var(--co)'},
+      carousel:{n:'Carousel',rp:230,fq:2.1,c:'var(--rm)'},
+      collection:{n:'Collection',rp:210,fq:2.6,c:'var(--cv)'},
+      post:{n:'Post',rp:220,fq:2.2,c:'var(--sig-dk)'}}; // Post: estimate, between the other Meta formats
+    // formats and budget split (%) per goal
+    var GOALS=[
+      {id:'reach',n:'Reach',mix:[['reels',40],['carousel',35],['collection',25]]},
+      {id:'video',n:'Video views',mix:[['reels',50],['video',50]]},
+      {id:'eng',n:'Post engagement',mix:[['post',60],['video',40]]},
+      {id:'sales',n:'Sales',mix:[['carousel',30],['collection',50],['reels',20]]}];
     var bud=plan.querySelector('.bud input'),out=plan.querySelector('.bud output'),body=plan.querySelector('.mp-body'),usd=plan.querySelector('.mp-usd');
-    var w=PRESETS.reach.slice(),sel=1,on=[1,1,1,1,1];
-    function E(){return isEn();}
-    function L(f,k){return E()?f[k+'en'||'en']:f[k+'ka'];}
-    function nm(i){return E()?F[i].en:F[i].ka;}
-    function ob(i){return E()?F[i].oen:F[i].oka;}
-    function pct(){var t=0,i,r=[];for(i=0;i<5;i++)t+=on[i]?w[i]:0;for(i=0;i<5;i++)r.push(on[i]&&t?w[i]/t*100:0);return r;}
-    function calc(){var b=+bud.value,P=pct(),rows=[],mr=0,mi=0,si=0,cl=0;
-      F.forEach(function(f,i){var u=b*P[i]/100,r={usd:u,p:P[i]};
-        if(f.rp){r.reach=u*f.rp;r.imp=r.reach*f.fq;mr+=r.reach;mi+=r.imp;}else{r.imp=u*f.imp;r.clicks=u/f.cpc;si+=r.imp;cl+=r.clicks;}rows.push(r);});
-      return {rows:rows,reach:mr*OVERLAP,imp:mi+si,freq:mr?mi/mr:0,clicks:cl,usd:b};}
+    var g=GOALS[0];
+    function calc(){var b=+bud.value,mr=0,mi=0;
+      var rows=g.mix.map(function(m){var f=F[m[0]],u=b*m[1]/100,r={p:m[1],usd:u,reach:u*f.rp};r.imp=r.reach*f.fq;mr+=r.reach;mi+=r.imp;return r;});
+      return {rows:rows,reach:mr*OVERLAP,imp:mi,usd:b};}
     function k(n){return n>=1e6?(n/1e6).toFixed(n>=1e7?1:2).replace(/\.0+$/,'')+'M':n>=1e4?Math.round(n/1e3)+'K':fmt(n);}
     // animated numbers
     var anim=[];function num(el,v,f){el._t=v;el._f=f||fmt;if(el._v===undefined||reduce){el._v=v;el.textContent=el._f(v);return;}if(anim.indexOf(el)<0)anim.push(el);if(!anim.raf)anim.raf=requestAnimationFrame(tick);}
     function tick(){anim.raf=0;anim=anim.filter(function(el){el._v+=(el._t-el._v)*.18;if(Math.abs(el._t-el._v)<.5)el._v=el._t;el.textContent=el._f(el._v);return el._v!==el._t;});if(anim.length)anim.raf=requestAnimationFrame(tick);}
-    function est(r,i){return F[i].rp?(E()?'reach ':'წვდომა ')+'≈ '+k(r.reach):(E()?'clicks ':'კლიკი ')+'≈ '+k(r.clicks);}
-    function est2(r,i){return F[i].rp?(E()?'impressions ':'ჩვენება ')+k(r.imp)+' · '+(E()?'freq. ':'სიხშ. ')+F[i].fq.toFixed(1):(E()?'impressions ':'ჩვენება ')+k(r.imp)+' · CPC $'+F[i].cpc.toFixed(2);}
-    function kpis(c){return '<div class="mp-kpis">'+
-      '<div><small>'+(E()?'Unique reach':'უნიკალური წვდომა')+'</small><b data-k="reach"></b></div>'+
-      '<div><small>'+(E()?'Impressions':'ჩვენებები')+'</small><b data-k="imp"></b></div>'+
-      '<div><small>'+(E()?'Frequency':'სიხშირე')+'</small><b data-k="freq"></b></div>'+
-      '<div><small>'+(E()?'Clicks':'კლიკები')+'</small><b data-k="clicks"></b></div></div>';}
-    function fillK(c){var m={reach:[c.reach,k],imp:[c.imp,k],freq:[c.freq*10,function(v){return (v/10).toFixed(1);}],clicks:[c.clicks,k]};
-      [].forEach.call(body.querySelectorAll('[data-k]'),function(el){var d=m[el.dataset.k];if(d)num(el,d[0],d[1]);});}
-    function rowsHtml(){return '<div class="rows mp-rows">'+F.map(function(f,i){return '<div class="row" data-i="'+i+'"><span class="dot" style="background:'+f.c+'"></span><div><b>'+nm(i)+'</b><small>'+ob(i)+' · <span class="mp-e2"></span></small></div><span class="pct"><b class="mp-p"></b><small class="est"></small></span></div>';}).join('')+'</div>';}
-    function fillRows(c){[].forEach.call(body.querySelectorAll('.mp-rows .row'),function(r){var i=+r.dataset.i,x=c.rows[i];r.querySelector('.mp-p').textContent=Math.round(x.p)+'%';r.querySelector('.est').textContent=est(x,i);r.querySelector('.mp-e2').textContent=est2(x,i);r.classList.toggle('mp-off',!on[i]);});}
+    function names(){return g.mix.map(function(m){return F[m[0]].n;}).join(' + ');}
 
-    var V={
-      goal:{g:'reach',build:function(){var self=this;
-          body.innerHTML='<div class="mp-goals" role="group" aria-label="Goal">'+GOALS.map(function(g){return '<button type="button" data-g="'+g[0]+'">'+g[1]+'</button>';}).join('')+'</div>'+
-            '<div class="mp-head"><small class="mp-hl"></small><b data-k="head"></b><span class="mp-hs"></span></div>'+
-            '<div class="mp-bars">'+F.map(function(f,i){return '<div class="mp-b" data-i="'+i+'"><span>'+nm(i)+'</span><div><i style="background:'+f.c+'"></i></div><b class="mp-v"></b></div>';}).join('')+'</div>'+kpis();
-          body.querySelector('.mp-goals').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;self.g=b.dataset.g;w=PRESETS[self.g].slice();update();});},
-        update:function(c){var self=this,g=self.g,R=c.rows,mx=0,en=E(),hv,hl,hs;
-          R.forEach(function(r){mx=Math.max(mx,r.imp);});
-          [].forEach.call(body.querySelectorAll('.mp-goals button'),function(b){b.classList.toggle('on',b.dataset.g===g);b.setAttribute('aria-pressed',b.dataset.g===g);});
-          [].forEach.call(body.querySelectorAll('.mp-b'),function(el){var i=+el.dataset.i,r=R[i];el.querySelector('i').style.width=(mx?r.imp/mx*100:0)+'%';el.classList.toggle('mp-zero',r.p<.5);
-            el.querySelector('.mp-v').textContent=Math.round(r.p)+'% · '+(F[i].rp?k(r.reach):k(r.clicks)+(en?' clicks':' კლიკი'));});
-          // headline number, computed only with the plan's formulas (reach per $10, x frequency, x 0.8 overlap, clicks = USD / 2.1)
-          if(g==='reach'){hv=c.reach;hl=en?'Unique reach':'უნიკალური წვდომა';hs=(en?'all Meta formats × 0.8 overlap':'ყველა Meta ფორმატი × 0.8 გადაფარვა');}
-          else if(g==='freq'){hv=c.freq*10;hl=en?'Average frequency':'საშუალო სიხშირე';hs=(en?'impressions ÷ reach':'ჩვენებები ÷ წვდომა');}
-          else if(g==='video'){var vu=R[0].usd+R[1].usd;hv=vu/CPV;hl=en?'Video views':'ვიდეო ნახვები';hs='Reels + '+(en?'Video':'ვიდეო')+': $'+fmt(vu)+' ÷ $0.003';}
-          else if(g==='eng'){var eu=R[0].usd+R[1].usd+R[2].usd;hv=eu/CPE;hl=en?'Post engagements':'პოსტის ჩართულობა';hs='Reels + '+(en?'Video + Carousel':'ვიდეო + კარუსელი')+': $'+fmt(eu)+' ÷ $0.015';}
-          else {hv=R[3].reach;hl=en?'Collection reach':'Collection-ის წვდომა';hs='+ Google Shopping: '+k(R[4].clicks)+(en?' clicks':' კლიკი')+' · CPC $2.10';}
-          body.querySelector('.mp-hl').textContent=hl;body.querySelector('.mp-hs').textContent=hs;
-          num(body.querySelector('[data-k="head"]'),hv,g==='freq'?function(v){return (v/10).toFixed(1);}:k);
-          fillK(c);}}
-    };
-    var cur;
-    function update(){var c=calc();out.textContent='$'+fmt(+bud.value);usd.textContent='';if(cur)V[cur].update(c);}
-    function use(v){cur='goal';plan.dataset.v='goal';V.goal.build();update();}
+    function build(){
+      body.innerHTML='<div class="mp-goals" role="group" aria-label="Goal">'+GOALS.map(function(x){return '<button type="button" data-g="'+x.id+'">'+x.n+'</button>';}).join('')+'</div>'+
+        '<div class="mp-head"><small class="mp-hl"></small><b data-k="head"></b><span class="mp-hs"></span></div>'+
+        '<div class="mp-bars">'+g.mix.map(function(m,i){var f=F[m[0]];return '<div class="mp-b" data-i="'+i+'"><span>'+f.n+'</span><div><i style="background:'+f.c+'"></i></div><b class="mp-v"></b></div>';}).join('')+'</div>'+
+        '<div class="mp-kpis"><div><small>Unique reach</small><b data-k="reach"></b></div><div><small>Impressions</small><b data-k="imp"></b></div></div>';
+      [].forEach.call(body.querySelectorAll('.mp-goals button'),function(b){var on=b.dataset.g===g.id;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);});
+      body.querySelector('.mp-goals').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.g===g.id)return;
+        g=GOALS.filter(function(x){return x.id===b.dataset.g;})[0];build();update();});}
+    function update(){var c=calc(),R=c.rows,mx=0,hv,hl,hs;out.textContent='$'+fmt(c.usd);usd.textContent='';
+      R.forEach(function(r){mx=Math.max(mx,r.imp);});
+      [].forEach.call(body.querySelectorAll('.mp-b'),function(el){var r=R[+el.dataset.i];el.querySelector('i').style.width=(mx?r.imp/mx*100:0)+'%';el.querySelector('.mp-v').textContent=r.p+'% · '+k(r.reach);});
+      // headline number, computed only with the plan's formulas (reach per $10, x frequency, x 0.8 overlap)
+      if(g.id==='video'){hv=c.usd/CPV;hl='Video views';hs=names()+': $'+fmt(c.usd)+' ÷ $0.003';}
+      else if(g.id==='eng'){hv=c.usd/CPE;hl='Post engagements';hs=names()+': $'+fmt(c.usd)+' ÷ $0.015';}
+      else if(g.id==='sales'){hl='Cost per purchase';hs='≈ '+fmt(c.usd/CPP[1])+'–'+fmt(c.usd/CPP[0])+' purchases for $'+fmt(c.usd);}
+      else {hv=c.reach;hl='Unique reach';hs=names()+' × 0.8 overlap';}
+      body.querySelector('.mp-hl').textContent=hl;body.querySelector('.mp-hs').textContent=hs;
+      if(g.id==='sales')body.querySelector('[data-k="head"]').textContent='$'+CPP[0]+' – $'+CPP[1];
+      else num(body.querySelector('[data-k="head"]'),hv,k);
+      num(body.querySelector('[data-k="reach"]'),c.reach,k);num(body.querySelector('[data-k="imp"]'),c.imp,k);}
     bud.addEventListener('input',update);
-    document.addEventListener('cerebro:lang',function(){use(cur);});
-    use('goal');
+    build();update();
   });
 
 
