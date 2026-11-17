@@ -12,11 +12,11 @@
     try{localStorage.setItem('cerebro-lang',l);}catch(e){}
     try{document.dispatchEvent(new Event('cerebro:lang'));}catch(e){}
   }
-  var start='ka';
-  if(location.hash==='#en') start='en';
-  else { try{var s=localStorage.getItem('cerebro-lang'); if(s==='en'||s==='ka') start=s;}catch(e){} }
-  setLang(start);
-  document.querySelectorAll('.lang button').forEach(function(b){b.addEventListener('click',function(){setLang(b.dataset.set);});});
+  // each language has its own URL (/ and /en/); the page sets data-lang, the switch goes to the other URL
+  setLang(root.getAttribute('data-lang')==='en'?'en':'ka');
+  document.querySelectorAll('.lang button').forEach(function(b){b.addEventListener('click',function(){
+    var h=b.dataset.href;if(!h||b.dataset.set===root.dataset.lang)return;setLang(b.dataset.set);
+    setTimeout(function(){location.href=h;},matchMedia('(prefers-reduced-motion: reduce)').matches?0:220);});});
 
   /* ---------- menus ---------- */
   var header=document.querySelector('header.top');
@@ -142,8 +142,8 @@
   /* 01 logo cursor: switched off, the site uses the standard cursor (set to true to bring it back) */
   var LOGO_CURSOR=false;
   if(fine&&LOGO_CURSOR){
-    var cm=document.createElement('div');cm.className='cur-mark';cm.setAttribute('aria-hidden','true');cm.innerHTML='<img src="assets/cerebro-mark.svg" alt="">';
-    var cr=document.createElement('div');cr.className='cur-ring';cr.setAttribute('aria-hidden','true');cr.innerHTML='<img src="assets/cerebro-mark.svg" alt=""><b></b>';
+    var cm=document.createElement('div');cm.className='cur-mark';cm.setAttribute('aria-hidden','true');cm.innerHTML='<img src="/assets/cerebro-mark.svg" alt="">';
+    var cr=document.createElement('div');cr.className='cur-ring';cr.setAttribute('aria-hidden','true');cr.innerHTML='<img src="/assets/cerebro-mark.svg" alt=""><b></b>';
     document.body.appendChild(cm);document.body.appendChild(cr);root.classList.add('has-cur','cur-off');
     var lbl=cr.querySelector('b'),cx=-200,cy=-200,rx=cx,ry=cy,rw=40,rh=40,rr=20,mode='free',tgt=null,down=false,shown='';
     var setMode=function(m){if(m===shown)return;['free','hover','stick','label','native'].forEach(function(k){root.classList.toggle('cur-'+k,k===m);});shown=m;};
@@ -215,7 +215,7 @@
   };
   /* 03 spotlight cards: glowing edge shared across the grid + morphing icon */
   document.querySelectorAll('.svc-card').forEach(function(c,i){
-    var key=(c.getAttribute('href')||'').replace(/^service-|\.html.*$/g,''),svg=SVC_IC[key],s=document.createElement('span');s.setAttribute('aria-hidden','true');
+    var key=c.dataset.svc||(c.getAttribute('href')||'').replace(/^service-|\.html.*$/g,''),svg=SVC_IC[key],s=document.createElement('span');s.setAttribute('aria-hidden','true');
     if(svg){s.className='svc-ic svc-ic-'+key;s.innerHTML=svg;}else{s.className='shape s'+(i%3);}
     c.insertBefore(s,c.firstChild);
     var e=document.createElement('span');e.className='edge';e.setAttribute('aria-hidden','true');c.appendChild(e);});
@@ -233,7 +233,7 @@
       b.appendChild(s);setTimeout(function(){s.remove();},700);});
   });
   /* 04b CTA band button morphs into a contact field, then hands off to the contact form */
-  document.querySelectorAll('.cta-band .btn[href^="contact.html"]').forEach(function(a){
+  document.querySelectorAll('.cta-band .btn[href*="contact"]').forEach(function(a){
     var m=document.createElement('div');m.className='morph';a.parentNode.insertBefore(m,a);m.appendChild(a);
     var fm=document.createElement('form');fm.noValidate=true;fm.innerHTML='<input name="contact" type="text" autocomplete="email"><button type="submit"></button>';m.appendChild(fm);
     var inp=fm.querySelector('input'),sb=fm.querySelector('button');

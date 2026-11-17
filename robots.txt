@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /_src/
+Disallow: /tools/
+
+Sitemap: https://cerebro.ge/sitemap.xml
